@@ -1,85 +1,198 @@
-# UNICAFE – Campus Food Delivery Portal
-**FAST-NUCES Islamabad** | Team: Maryam Abid, Aftab Ahmed, Shadab Ahad
+<div align="center">
+
+# 🍔 UNICAFE
+### Campus Food Delivery Portal
+
+**FAST-NUCES Islamabad**
+
+[![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Flask](https://img.shields.io/badge/Flask-2.x-000000?style=for-the-badge&logo=flask&logoColor=white)](https://flask.palletsprojects.com)
+[![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)](https://sqlite.org)
+[![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=for-the-badge&logo=html5&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/HTML)
+[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=for-the-badge&logo=css3&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/CSS)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+
+*A full-stack web application for ordering food from campus cafes — built for students, by students.*
+
+[Features](#-features) • [Quick Start](#-quick-start) • [Demo Accounts](#-demo-accounts) • [Tech Stack](#-tech-stack) • [Team](#-team)
+
+</div>
 
 ---
 
-## Quick Start
+## 📌 About
 
-### Windows
+UNICAFE is a campus food ordering and delivery management system designed for **FAST-NUCES Islamabad**. It connects three types of users — **students**, **cafe owners**, and **delivery boys** — in one seamless platform.
+
+Students can subscribe to cafes, browse menus, place orders, and track deliveries in real time. Owners manage their menus and incoming orders, while delivery boys handle assignments and track their earnings.
+
+---
+
+## ✨ Features
+
+### 🎓 For Students
+- Sign up and log in securely
+- Request subscription to a cafe (owner approval required)
+- Browse full cafe menus with categories and prices
+- Add items to cart and place orders with room number delivery
+- Track order status live (Pending → Preparing → Ready → Delivered)
+- Rate orders and file complaints after delivery
+
+### 🏪 For Cafe Owners
+- Manage menu items — add, edit, delete, toggle availability
+- View and process incoming orders step-by-step
+- Approve/reject student subscription requests
+- Assign delivery boys to ready orders
+- View feedback and resolve complaints
+
+### 🛵 For Delivery Boys
+- Register under a specific cafe
+- View assigned active orders
+- Mark orders as delivered
+- Track delivery history and earnings (Rs. 10/delivery)
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+- Python 3.8+
+- pip
+
+### Installation
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/YOUR_USERNAME/unicafe.git
+cd unicafe
+
+# 2. Install dependencies
+pip install flask flask-cors bcrypt
+
+# 3. Run the app
+python app.py
+```
+
+Then open your browser and go to: **http://localhost:5000**
+
+### Platform-Specific Launchers
+
+**Windows:**
 ```
 Double-click run.bat
 ```
 
-### Linux / Mac
+**Linux / macOS:**
 ```bash
 chmod +x run.sh
 ./run.sh
 ```
 
-### Manual
-```bash
-pip install flask flask-cors bcrypt
-python3 app.py
-```
-
-Then open: **http://localhost:5000**
-
 ---
 
-## Demo Accounts
+## 🔑 Demo Accounts
+
+Use these to explore the system without signing up:
 
 | Role | Email | Password |
 |------|-------|----------|
-| Red Cafe Owner | redcafe@unicafe.com | redcafe123 |
-| Blue Cafe Owner | bluecafe@unicafe.com | bluecafe123 |
+| 🔴 Red Cafe Owner | redcafe@unicafe.com | redcafe123 |
+| 🔵 Blue Cafe Owner | bluecafe@unicafe.com | bluecafe123 |
 
-Sign up as **Student** or **Delivery Boy** from the signup page.
-
----
-
-## Workflow
-
-### Student
-1. Sign up → Login → You land on **menu.html**
-2. Go to **Subscription** tab → Request subscription for a cafe
-3. Owner verifies subscription → You can now place orders
-4. Browse menu → Add to cart → Enter room number → Place Order
-5. Track order status in **My Orders** tab
-6. After delivery: Rate order or file complaint
-
-### Cafe Owner
-1. Login → You land on **owner.html**
-2. **Menu Items** tab → Add/edit/delete food items
-3. **Orders** tab → See incoming orders → Mark Preparing → Mark Ready → Assign Delivery Boy
-4. **Subscriptions** tab → Verify student subscription requests
-5. **Complaints** tab → Resolve student complaints
-6. **Feedback** tab → View ratings
-
-### Delivery Boy
-1. Sign up (select your cafe) → Login → **delivery.html**
-2. **Active Orders** tab → See assigned orders → Mark as Delivered
-3. **Delivery History** tab → View past deliveries and earnings (Rs. 10/delivery)
+> Sign up as **Student** or **Delivery Boy** from the main signup page.
 
 ---
 
-## Tech Stack
-- **Backend**: Python Flask + SQLite3
-- **Frontend**: HTML5, CSS3, Vanilla JS
-- **Auth**: Server-side sessions
-- **DB**: unicafe.db (auto-created on first run)
+## 🗂️ Project Structure
 
-## File Structure
 ```
 unicafe/
-├── app.py              ← Flask backend (all API routes)
-├── unicafe.db          ← SQLite database (auto-created)
-├── run.bat             ← Windows launcher
-├── run.sh              ← Linux/Mac launcher
+├── app.py              ← Flask backend (all API routes & DB logic)
+├── run.bat             ← Windows one-click launcher
+├── run.sh              ← Linux/Mac one-click launcher
+├── package.json        ← Project metadata
 └── public/
-    ├── index.html      ← Login / Signup page
+    ├── index.html      ← Login & Signup page
     ├── menu.html       ← Student dashboard
     ├── owner.html      ← Cafe owner dashboard
     ├── delivery.html   ← Delivery boy dashboard
-    ├── style.css       ← All styles
+    ├── style.css       ← All shared styles
     └── utils.js        ← Shared JS utilities
 ```
+
+---
+
+## 🔄 How It Works
+
+```
+Student ──────► Subscribes to Cafe
+                      │
+              Owner Approves/Rejects
+                      │
+Student ──────► Browses Menu & Places Order
+                      │
+              Owner: Preparing → Ready → Assigns Delivery Boy
+                      │
+Delivery Boy ──────► Marks as Delivered
+                      │
+Student ──────► Rates & Reviews
+```
+
+---
+
+## 🛠️ Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| Backend | Python, Flask |
+| Database | SQLite3 |
+| Auth | Server-side sessions + bcrypt |
+| Frontend | HTML5, CSS3, Vanilla JS |
+| API Style | RESTful JSON |
+
+---
+
+## 📸 Screenshots
+
+> *(Add screenshots here — see tip below)*
+
+| Login Page | Student Dashboard | Owner Panel |
+|------------|------------------|-------------|
+| ![Login](screenshots/login.png) | ![Menu](screenshots/menu.png) | ![Owner](screenshots/owner.png) |
+
+<details>
+<summary>💡 How to add screenshots</summary>
+
+1. Run the project locally
+2. Take screenshots of each page
+3. Create a `screenshots/` folder in your repo
+4. Upload: `login.png`, `menu.png`, `owner.png`, `delivery.png`
+5. The table above will automatically show them
+
+</details>
+
+---
+
+## 👥 Team
+
+| Name | Role |
+|------|------|
+| **Maryam Abid** | Team Member |
+| **Aftab Ahmed** | Team Member |
+| **Shadab Ahad** | Team Member |
+
+> 📍 FAST-NUCES Islamabad
+
+---
+
+## 📄 License
+
+This project was built as an academic project. Feel free to use it for learning purposes.
+
+---
+
+<div align="center">
+
+Made with ❤️ at FAST-NUCES Islamabad
+
+</div>
