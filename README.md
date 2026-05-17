@@ -154,22 +154,9 @@ Student ──────► Rates & Reviews
 
 ## 📸 Screenshots
 
-> *(Add screenshots here — see tip below)*
-
 | Login Page | Student Dashboard | Owner Panel |
 |------------|------------------|-------------|
 | ![Login](screenshots/login.png) | ![Menu](screenshots/menu.png) | ![Owner](screenshots/owner.png) |
-
-<details>
-<summary>💡 How to add screenshots</summary>
-
-1. Run the project locally
-2. Take screenshots of each page
-3. Create a `screenshots/` folder in your repo
-4. Upload: `login.png`, `menu.png`, `owner.png`, `delivery.png`
-5. The table above will automatically show them
-
-</details>
 
 ---
 
@@ -177,9 +164,9 @@ Student ──────► Rates & Reviews
 
 | Name | Role |
 |------|------|
-| **Maryam Abid** | Team Member |
-| **Aftab Ahmed** | Team Member |
-| **Shadab Ahad** | Team Member |
+| **Maryam Abid** | Project Lead |
+| **Aftab Ahmed** | Backend Developer |
+| **Shadab Ahad** | Frontend Developer |
 
 > 📍 FAST-NUCES Islamabad
 
