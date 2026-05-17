@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UNICAFE – Owner Dashboard</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<nav class="navbar">
+  <div class="navbar-brand">☕ <span>UNI</span>CAFE</div>
+  <div class="navbar-right">
+    <span class="user-name" id="nav-user"></span>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="page-title">🍽️ Owner Dashboard</div>
+
+  <!-- Stats -->
+  <div class="stats-grid" id="stats-grid">
+    <div class="stat-card"><div class="stat-val" id="s-today">-</div><div class="stat-label">Orders Today</div></div>
+    <div class="stat-card"><div class="stat-val" id="s-pending">-</div><div class="stat-label">Pending Orders</div></div>
+    <div class="stat-card"><div class="stat-val" id="s-revenue">-</div><div class="stat-label">Monthly Revenue (Rs.)</div></div>
+    <div class="stat-card"><div class="stat-val" id="s-subs">-</div><div class="stat-label">Active Subscribers</div></div>
+    <div class="stat-card"><div class="stat-val" id="s-complaints">-</div><div class="stat-label">Open Complaints</div></div>
+  </div>
+
+  <!-- Section Tabs -->
+  <div class="section-tabs">
+    <div class="section-tab active" onclick="switchSection('orders',this)">📦 Orders</div>
+    <div class="section-tab" onclick="switchSection('items',this)">🍕 Menu Items</div>
+    <div class="section-tab" onclick="switchSection('subscriptions',this)">⭐ Subscriptions</div>
+    <div class="section-tab" onclick="switchSection('feedback',this)">⭐ Feedback</div>
+    <div class="section-tab" onclick="switchSection('complaints',this)">📣 Complaints</div>
+  </div>
+
+  <!-- ORDERS -->
+  <div class="section-content active" id="sec-orders">
+    <div class="flex-between mb-2">
+      <strong>Incoming Orders</strong>
+      <select class="form-control" style="width:auto" id="order-filter" onchange="renderOrders()">
+        <option value="">All Status</option>
+        <option value="pending">Pending</option>
+        <option value="preparing">Preparing</option>
+        <option value="ready">Ready</option>
+        <option value="out_for_delivery">Out for Delivery</option>
+        <option value="delivered">Delivered</option>
+      </select>
+    </div>
+    <div id="orders-list"><div class="empty-state"><div class="emoji">⏳</div>Loading...</div></div>
+  </div>
+
+  <!-- ITEMS -->
+  <div class="section-content" id="sec-items">
+    <div class="flex-between mb-2">
+      <strong>Menu Items</strong>
+      <button class="btn btn-primary btn-sm" onclick="openItemModal()">+ Add Item</button>
+    </div>
+    <div class="table-wrap">
+      <table id="items-table">
+        <thead><tr><th>Name</th><th>Category</th><th>Price</th><th>Available</th><th>Actions</th></tr></thead>
+        <tbody id="items-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SUBSCRIPTIONS -->
+  <div class="section-content" id="sec-subscriptions">
+    <strong>Subscription Requests</strong>
+    <div class="table-wrap mt-2">
+      <table>
+        <thead><tr><th>Student</th><th>Roll No</th><th>Email</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="subs-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FEEDBACK -->
+  <div class="section-content" id="sec-feedback">
+    <strong>Student Feedback</strong>
+    <div id="feedback-list" class="mt-2"></div>
+  </div>
+
+  <!-- COMPLAINTS -->
+  <div class="section-content" id="sec-complaints">
+    <strong>Complaints</strong>
+    <div class="table-wrap mt-2">
+      <table>
+        <thead><tr><th>Order #</th><th>Student</th><th>Room</th><th>Complaint</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody id="complaints-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Item Modal -->
+<div class="modal-overlay hidden" id="item-modal">
+  <div class="modal">
+    <div class="modal-title" id="item-modal-title">Add Menu Item</div>
+    <input type="hidden" id="item-id">
+    <div class="form-group"><label class="form-label">Item Name</label><input class="form-control" id="item-name" placeholder="e.g. Biryani"></div>
+    <div class="form-group"><label class="form-label">Price (Rs.)</label><input class="form-control" type="number" id="item-price" placeholder="150"></div>
+    <div class="form-group"><label class="form-label">Category</label>
+      <select class="form-control" id="item-category">
+        <option value="breakfast">Breakfast</option>
+        <option value="lunch">Lunch</option>
+        <option value="beverages">Beverages</option>
+        <option value="snacks">Snacks</option>
+        <option value="general">General</option>
+      </select>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><input class="form-control" id="item-desc" placeholder="Brief description"></div>
+    <div class="form-group"><label class="form-label">Image URL (optional)</label><input class="form-control" id="item-image" placeholder="https://..."></div>
+    <div class="form-group"><label class="form-label">Available</label>
+      <select class="form-control" id="item-available">
+        <option value="1">Yes</option>
+        <option value="0">No</option>
+      </select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeItemModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Delivery Modal -->
+<div class="modal-overlay hidden" id="assign-modal">
+  <div class="modal">
+    <div class="modal-title">Assign Delivery Boy</div>
+    <input type="hidden" id="assign-order-id">
+    <div class="form-group">
+      <label class="form-label">Select Delivery Boy</label>
+      <select class="form-control" id="delivery-boy-select"></select>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeAssignModal()">Cancel</button>
+      <button class="btn btn-success" onclick="confirmAssign()">Assign</button>
+    </div>
+  </div>
+</div>
+
+<script src="/utils.js"></script>
+<script>
+const user = requireRole('owner');
+if (user) document.getElementById('nav-user').textContent = user.name;
+
+let allOrders = [], allItems = [], deliveryBoys = [];
+
+async function init() {
+  await Promise.all([loadStats(), loadOrders(), loadItems(), loadDeliveryBoys()]);
+}
+
+async function loadStats() {
+  const s = await apiFetch('/api/owner/stats');
+  document.getElementById('s-today').textContent = s.orders_today;
+  document.getElementById('s-pending').textContent = s.pending_orders;
+  document.getElementById('s-revenue').textContent = s.monthly_revenue.toFixed(0);
+  document.getElementById('s-subs').textContent = s.active_subscribers;
+  document.getElementById('s-complaints').textContent = s.open_complaints;
+}
+
+async function loadOrders() {
+  allOrders = await apiFetch('/api/orders');
+  renderOrders();
+}
+
+function renderOrders() {
+  const filter = document.getElementById('order-filter').value;
+  const filtered = filter ? allOrders.filter(o=>o.status===filter) : allOrders;
+  const el = document.getElementById('orders-list');
+  if (!filtered.length) { el.innerHTML = '<div class="empty-state"><div class="emoji">📦</div>No orders</div>'; return; }
+  el.innerHTML = filtered.map(o => `
+    <div class="delivery-order-card">
+      <div class="delivery-order-header">
+        <div>
+          <strong>#${o.id} – ${o.student_name}</strong> (${o.roll_no||'N/A'})
+          <div class="text-muted">${fmtDate(o.created_at)} · Room: ${o.room_no||'-'}</div>
+          <div class="text-muted">${o.items.map(i=>`${i.item_name} x${i.quantity}`).join(', ')}</div>
+          ${o.special_instructions ? `<div class="text-muted">Note: ${o.special_instructions}</div>` : ''}
+        </div>
+        <div style="text-align:right">
+          ${statusBadge(o.status)}
+          <div style="font-weight:800;color:var(--latte);margin-top:4px">Rs. ${o.total_amount}</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${o.status==='pending' ? `<button class="btn btn-warning btn-sm" onclick="updateStatus(${o.id},'preparing')">🔄 Mark Preparing</button>` : ''}
+        ${o.status==='preparing' ? `<button class="btn btn-primary btn-sm" onclick="updateStatus(${o.id},'ready')">✓ Mark Ready</button>` : ''}
+        ${o.status==='ready' ? `<button class="btn btn-success btn-sm" onclick="openAssignModal(${o.id})">🚴 Assign Delivery</button>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function updateStatus(orderId, status) {
+  try {
+    await apiFetch(`/api/orders/${orderId}/status`, { method:'PUT', body: JSON.stringify({status}) });
+    showToast('Status updated', 'success');
+    loadStats();
+    loadOrders();
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+async function loadDeliveryBoys() {
+  deliveryBoys = await apiFetch('/api/delivery-boys');
+}
+
+function openAssignModal(orderId) {
+  document.getElementById('assign-order-id').value = orderId;
+  const sel = document.getElementById('delivery-boy-select');
+  if (!deliveryBoys.length) {
+    sel.innerHTML = '<option>No delivery boys registered</option>';
+  } else {
+    sel.innerHTML = deliveryBoys.map(d=>`<option value="${d.id}">${d.name}</option>`).join('');
+  }
+  document.getElementById('assign-modal').classList.remove('hidden');
+}
+function closeAssignModal() { document.getElementById('assign-modal').classList.add('hidden'); }
+
+async function confirmAssign() {
+  const orderId = document.getElementById('assign-order-id').value;
+  const delivery_boy_id = document.getElementById('delivery-boy-select').value;
+  try {
+    await apiFetch(`/api/orders/${orderId}/assign-delivery`, { method:'POST', body: JSON.stringify({delivery_boy_id}) });
+    closeAssignModal();
+    showToast('Delivery boy assigned!', 'success');
+    loadOrders();
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+// Items
+async function loadItems() {
+  const u = getUser();
+  allItems = await apiFetch(`/api/items?cafe_id=${u.cafe_id}`);
+  const tbody = document.getElementById('items-tbody');
+  if (!allItems.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No items yet</td></tr>'; return; }
+  tbody.innerHTML = allItems.map(i => `
+    <tr>
+      <td><strong>${i.name}</strong><br><span class="text-muted">${i.description||''}</span></td>
+      <td><span class="badge badge-pending">${i.category}</span></td>
+      <td>Rs. ${i.price}</td>
+      <td class="${i.available?'available-yes':'available-no'}">${i.available?'Yes':'No'}</td>
+      <td>
+        <button class="btn btn-warning btn-sm" onclick="editItem(${i.id})">✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteItem(${i.id})">🗑️ Delete</button>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openItemModal(item=null) {
+  document.getElementById('item-modal-title').textContent = item ? 'Edit Item' : 'Add Menu Item';
+  document.getElementById('item-id').value = item ? item.id : '';
+  document.getElementById('item-name').value = item ? item.name : '';
+  document.getElementById('item-price').value = item ? item.price : '';
+  document.getElementById('item-category').value = item ? item.category : 'general';
+  document.getElementById('item-desc').value = item ? item.description||'' : '';
+  document.getElementById('item-image').value = item ? item.image||'' : '';
+  document.getElementById('item-available').value = item ? (item.available?'1':'0') : '1';
+  document.getElementById('item-modal').classList.remove('hidden');
+}
+
+function closeItemModal() { document.getElementById('item-modal').classList.add('hidden'); }
+
+function editItem(id) {
+  const item = allItems.find(i=>i.id===id);
+  if(item) openItemModal(item);
+}
+
+async function deleteItem(id) {
+  if(!confirm('Delete this item?')) return;
+  try {
+    await apiFetch(`/api/items/${id}`, { method:'DELETE' });
+    showToast('Item deleted','success');
+    loadItems();
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+async function saveItem() {
+  const id = document.getElementById('item-id').value;
+  const body = {
+    name: document.getElementById('item-name').value.trim(),
+    price: parseFloat(document.getElementById('item-price').value),
+    category: document.getElementById('item-category').value,
+    description: document.getElementById('item-desc').value.trim(),
+    image: document.getElementById('item-image').value.trim() || 'https://via.placeholder.com/150x100?text=Food',
+    available: parseInt(document.getElementById('item-available').value)
+  };
+  if(!body.name || !body.price) { showToast('Name and price required','error'); return; }
+  try {
+    if(id) {
+      await apiFetch(`/api/items/${id}`, { method:'PUT', body: JSON.stringify(body) });
+      showToast('Item updated','success');
+    } else {
+      await apiFetch('/api/items', { method:'POST', body: JSON.stringify(body) });
+      showToast('Item added','success');
+    }
+    closeItemModal();
+    loadItems();
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+// Subscriptions
+async function loadSubscriptions() {
+  const subs = await apiFetch('/api/subscriptions');
+  const tbody = document.getElementById('subs-tbody');
+  if(!subs.length) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--muted)">No subscription requests</td></tr>'; return; }
+  tbody.innerHTML = subs.map(s => `
+    <tr>
+      <td>${s.student_name}</td>
+      <td>${s.roll_no||'-'}</td>
+      <td>${s.student_email}</td>
+      <td>${statusBadge(s.status)}</td>
+      <td>
+        ${s.status==='pending' ? `
+          <button class="btn btn-success btn-sm" onclick="verifySub(${s.id})">✓ Verify</button>
+          <button class="btn btn-danger btn-sm" onclick="rejectSub(${s.id})">✗ Reject</button>
+        ` : '-'}
+      </td>
+    </tr>
+  `).join('');
+}
+
+async function verifySub(id) {
+  try {
+    await apiFetch(`/api/subscriptions/${id}/verify`, {method:'PUT'});
+    showToast('Subscription verified!','success');
+    loadSubscriptions(); loadStats();
+  } catch(e) { showToast(e.message,'error'); }
+}
+async function rejectSub(id) {
+  try {
+    await apiFetch(`/api/subscriptions/${id}/reject`, {method:'PUT'});
+    showToast('Subscription rejected','success');
+    loadSubscriptions();
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+// Feedback
+async function loadFeedback() {
+  const fb = await apiFetch('/api/feedback');
+  const el = document.getElementById('feedback-list');
+  if(!fb.length) { el.innerHTML = '<div class="empty-state"><div class="emoji">⭐</div>No feedback yet</div>'; return; }
+  el.innerHTML = fb.map(f => `
+    <div class="card mb-2">
+      <div class="flex-between">
+        <div><strong>${f.student_name}</strong> – Order #${f.order_id} · Room ${f.room_no||'-'}</div>
+        <div style="color:var(--warning);font-size:1.2rem">${starsHtml(f.rating)}</div>
+      </div>
+      ${f.comment ? `<div class="text-muted mt-1">"${f.comment}"</div>` : ''}
+      <div class="text-muted" style="font-size:0.78rem;margin-top:4px">${fmtDate(f.created_at)}</div>
+    </div>
+  `).join('');
+}
+
+// Complaints
+async function loadComplaints() {
+  const cp = await apiFetch('/api/complaints');
+  const tbody = document.getElementById('complaints-tbody');
+  if(!cp.length) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted)">No complaints</td></tr>'; return; }
+  tbody.innerHTML = cp.map(c => `
+    <tr>
+      <td>#${c.order_id}</td>
+      <td>${c.student_name}</td>
+      <td>${c.room_no||'-'}</td>
+      <td>${c.complaint_text}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td>${c.status==='open' ? `<button class="btn btn-success btn-sm" onclick="resolveComplaint(${c.id})">✓ Resolve</button>` : '-'}</td>
+    </tr>
+  `).join('');
+}
+
+async function resolveComplaint(id) {
+  try {
+    await apiFetch(`/api/complaints/${id}/resolve`, {method:'PUT'});
+    showToast('Complaint resolved','success');
+    loadComplaints(); loadStats();
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+function switchSection(sec, el) {
+  document.querySelectorAll('.section-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section-content').forEach(s=>s.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('sec-'+sec).classList.add('active');
+  if(sec==='subscriptions') loadSubscriptions();
+  if(sec==='feedback') loadFeedback();
+  if(sec==='complaints') loadComplaints();
+}
+
+// Auto-refresh orders every 30s
+setInterval(() => { loadOrders(); loadStats(); }, 30000);
+
+init();
+</script>
+</body>
+</html>

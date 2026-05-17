@@ -1,0 +1,15 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Database
+*.db
+
+# Environment files
+.env
+
+# VS Code
+.vscode/
+
+# Mac/Linux
+.DS_Store

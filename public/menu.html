@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UNICAFE – Menu</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar">
+  <div class="navbar-brand">☕ <span>UNI</span>CAFE</div>
+  <div class="navbar-right">
+    <span class="user-name" id="nav-user"></span>
+    <button class="btn-logout" onclick="logout()">Logout</button>
+  </div>
+</nav>
+
+<!-- Cart Panel -->
+<div class="cart-panel" id="cart-panel">
+  <div class="cart-header">
+    <h3>🛒 Your Cart</h3>
+    <button class="cart-close" onclick="toggleCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cart-items">
+    <div class="empty-state"><div class="emoji">🛒</div>Cart is empty</div>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-total">Total <span id="cart-total">Rs. 0</span></div>
+    <div class="form-group">
+      <label class="form-label">Room / Location</label>
+      <input class="form-control" id="room-no" placeholder="e.g. CS-101, Hostel Block A">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Special Instructions (optional)</label>
+      <input class="form-control" id="special-inst" placeholder="No onions, extra sauce...">
+    </div>
+    <button class="btn btn-primary" style="width:100%" onclick="placeOrder()">Place Order</button>
+  </div>
+</div>
+
+<!-- Cart FAB -->
+<button class="cart-fab" id="cart-fab" onclick="toggleCart()" style="display:none">
+  🛒 Cart <div class="cart-badge" id="cart-count">0</div>
+</button>
+
+<!-- Main Page -->
+<div class="page">
+
+  <!-- Section Tabs -->
+  <div class="section-tabs">
+    <div class="section-tab active" onclick="switchSection('menu',this)">📋 Menu</div>
+    <div class="section-tab" onclick="switchSection('orders',this)">📦 My Orders</div>
+    <div class="section-tab" onclick="switchSection('subscriptions',this)">⭐ Subscription</div>
+    <div class="section-tab" onclick="switchSection('complaints',this)">📣 Complaints</div>
+  </div>
+
+  <!-- MENU SECTION -->
+  <div class="section-content active" id="sec-menu">
+    <div class="cafe-tabs" id="cafe-tabs"></div>
+    <div class="cat-filter" id="cat-filter"></div>
+    <div class="menu-grid" id="menu-grid">
+      <div class="empty-state"><div class="emoji">⏳</div>Loading menu...</div>
+    </div>
+  </div>
+
+  <!-- ORDERS SECTION -->
+  <div class="section-content" id="sec-orders">
+    <div class="page-title">📦 My Orders</div>
+    <div id="orders-list">
+      <div class="empty-state"><div class="emoji">⏳</div>Loading...</div>
+    </div>
+  </div>
+
+  <!-- SUBSCRIPTIONS SECTION -->
+  <div class="section-content" id="sec-subscriptions">
+    <div class="page-title">⭐ Subscriptions (Rs. 50/month)</div>
+    <p class="text-muted mb-2">You need an active subscription per cafe to place orders. Pay Rs. 50/month and request verification from the cafe owner.</p>
+    <div id="sub-list"></div>
+    <div class="mt-2">
+      <div class="card">
+        <div class="card-title">Request New Subscription</div>
+        <div class="form-group">
+          <label class="form-label">Select Cafe</label>
+          <select class="form-control" id="sub-cafe-select"></select>
+        </div>
+        <p class="text-muted mb-2" style="font-size:0.82rem">Payment: Rs. 50/month (Simulate: Owner will verify your request)</p>
+        <button class="btn btn-primary" onclick="requestSub()">Request Subscription</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPLAINTS SECTION -->
+  <div class="section-content" id="sec-complaints">
+    <div class="page-title">📣 Complaints & Feedback</div>
+    <div id="complaints-list"></div>
+  </div>
+
+</div>
+
+<!-- Feedback Modal -->
+<div class="modal-overlay hidden" id="feedback-modal">
+  <div class="modal">
+    <div class="modal-title">⭐ Rate Your Order</div>
+    <div class="form-group">
+      <label class="form-label">Rating</label>
+      <div class="star-rating" id="star-rating">
+        <span class="star" onclick="setRating(1)">★</span>
+        <span class="star" onclick="setRating(2)">★</span>
+        <span class="star" onclick="setRating(3)">★</span>
+        <span class="star" onclick="setRating(4)">★</span>
+        <span class="star" onclick="setRating(5)">★</span>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Comment (optional)</label>
+      <textarea class="form-control" id="feedback-comment" rows="3" placeholder="How was your order?"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeFeedback()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitFeedback()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Complaint Modal -->
+<div class="modal-overlay hidden" id="complaint-modal">
+  <div class="modal">
+    <div class="modal-title">📣 File a Complaint</div>
+    <div class="form-group">
+      <label class="form-label">Describe your issue</label>
+      <textarea class="form-control" id="complaint-text" rows="4" placeholder="Wrong item, late delivery, food quality..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeComplaint()">Cancel</button>
+      <button class="btn btn-danger" onclick="submitComplaint()">Submit Complaint</button>
+    </div>
+  </div>
+</div>
+
+<script src="/utils.js"></script>
+<script>
+const user = requireRole('student');
+if (user) {
+  document.getElementById('nav-user').textContent = user.name;
+}
+
+let cafes = [], items = [], cart = [], allOrders = [];
+let activeCafe = null, activeCategory = 'all';
+let feedbackOrderId = null, complaintOrderId = null, selectedRating = 0;
+
+async function init() {
+  cafes = await apiFetch('/api/cafes');
+  renderCafeTabs();
+  if (cafes.length > 0) await loadMenu(cafes[0].id);
+  loadSubCafeSelect();
+}
+
+function renderCafeTabs() {
+  const colors = ['red','blue','red','blue'];
+  const icons = ['🔴','🔵','🟡','🟢'];
+  document.getElementById('cafe-tabs').innerHTML = cafes.map((c,i) => `
+    <button class="cafe-tab-btn ${activeCafe===c.id ? 'active-'+colors[i%2] : ''}" 
+            onclick="loadMenu(${c.id})" id="cafe-btn-${c.id}" data-color="${colors[i%2]}">
+      ${icons[i%2]} ${c.name}
+    </button>
+  `).join('');
+}
+
+async function loadMenu(cafeId) {
+  activeCafe = cafeId;
+  const color = cafes.findIndex(c=>c.id===cafeId)%2===0 ? 'red' : 'blue';
+  document.querySelectorAll('.cafe-tab-btn').forEach(b => {
+    b.className = 'cafe-tab-btn' + (parseInt(b.id.split('-')[2])===cafeId ? ' active-'+b.dataset.color : '');
+  });
+  document.getElementById('cart-fab').style.display = 'flex';
+  items = await apiFetch(`/api/items?cafe_id=${cafeId}`);
+  renderCategoryFilter();
+  renderMenu();
+}
+
+function renderCategoryFilter() {
+  const cats = ['all', ...new Set(items.map(i=>i.category))];
+  document.getElementById('cat-filter').innerHTML = cats.map(c => `
+    <button class="cat-btn ${activeCategory===c?'active':''}" onclick="filterCat('${c}')">${c==='all'?'All':c.charAt(0).toUpperCase()+c.slice(1)}</button>
+  `).join('');
+}
+
+function filterCat(cat) {
+  activeCategory = cat;
+  document.querySelectorAll('.cat-btn').forEach(b => b.classList.toggle('active', b.textContent.toLowerCase()===(cat==='all'?'all':cat)));
+  renderMenu();
+}
+
+function renderMenu() {
+  const filtered = activeCategory==='all' ? items : items.filter(i=>i.category===activeCategory);
+  if (!filtered.length) {
+    document.getElementById('menu-grid').innerHTML = '<div class="empty-state"><div class="emoji">😔</div>No items found</div>';
+    return;
+  }
+  document.getElementById('menu-grid').innerHTML = filtered.map(item => `
+    <div class="menu-item-card">
+      <img src="${item.image}" alt="${item.name}" onerror="this.src='https://via.placeholder.com/220x120?text=${encodeURIComponent(item.name)}'">
+      <div class="menu-item-info">
+        <div class="menu-item-name">${item.name}</div>
+        <div class="menu-item-desc">${item.description || ''}</div>
+        <div class="menu-item-price">Rs. ${item.price}</div>
+      </div>
+      <div class="menu-item-footer">
+        <span class="${item.available?'available-yes':'available-no'}">${item.available?'✓ Available':'✗ Unavailable'}</span>
+        <button class="btn btn-primary btn-sm" onclick="addToCart(${item.id},'${item.name.replace(/'/g,"\\'")}',${item.price})" ${!item.available?'disabled':''}>
+          + Add
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Cart
+function addToCart(id, name, price) {
+  const ex = cart.find(c=>c.item_id===id);
+  if (ex) ex.quantity++;
+  else cart.push({item_id:id, name, price, quantity:1});
+  updateCartUI();
+  showToast(`${name} added to cart`, 'success');
+}
+
+function updateCartUI() {
+  const total = cart.reduce((s,c)=>s+c.price*c.quantity,0);
+  const count = cart.reduce((s,c)=>s+c.quantity,0);
+  document.getElementById('cart-count').textContent = count;
+  document.getElementById('cart-total').textContent = 'Rs. ' + total.toFixed(0);
+  
+  if (!cart.length) {
+    document.getElementById('cart-items').innerHTML = '<div class="empty-state"><div class="emoji">🛒</div>Cart is empty</div>';
+    return;
+  }
+  document.getElementById('cart-items').innerHTML = cart.map(c => `
+    <div class="cart-item">
+      <div>
+        <div class="cart-item-name">${c.name}</div>
+        <div class="cart-item-price">Rs. ${c.price * c.quantity}</div>
+      </div>
+      <div class="qty-control">
+        <button class="qty-btn" onclick="changeQty(${c.item_id},-1)">−</button>
+        <span>${c.quantity}</span>
+        <button class="qty-btn" onclick="changeQty(${c.item_id},1)">+</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function changeQty(id, delta) {
+  const idx = cart.findIndex(c=>c.item_id===id);
+  if (idx < 0) return;
+  cart[idx].quantity += delta;
+  if (cart[idx].quantity <= 0) cart.splice(idx,1);
+  updateCartUI();
+}
+
+function toggleCart() {
+  document.getElementById('cart-panel').classList.toggle('open');
+}
+
+async function placeOrder() {
+  if (!cart.length) { showToast('Cart is empty', 'error'); return; }
+  const room = document.getElementById('room-no').value.trim();
+  if (!room) { showToast('Enter your room/location', 'error'); return; }
+  const inst = document.getElementById('special-inst').value.trim();
+  try {
+    const res = await apiFetch('/api/orders', {
+      method:'POST',
+      body: JSON.stringify({ cafe_id: activeCafe, items: cart, room_no: room, special_instructions: inst })
+    });
+    cart = [];
+    updateCartUI();
+    document.getElementById('cart-panel').classList.remove('open');
+    showToast(`Order #${res.order_id} placed! 🎉`, 'success');
+    switchSection('orders', document.querySelector('.section-tab:nth-child(2)'));
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// Orders
+async function loadOrders() {
+  allOrders = await apiFetch('/api/orders');
+  const el = document.getElementById('orders-list');
+  if (!allOrders.length) {
+    el.innerHTML = '<div class="empty-state"><div class="emoji">📦</div>No orders yet</div>';
+    return;
+  }
+  el.innerHTML = allOrders.map(o => `
+    <div class="card mb-2">
+      <div class="flex-between mb-1">
+        <div>
+          <strong>Order #${o.id}</strong> – ${o.cafe_name}
+          <div class="text-muted">${fmtDate(o.created_at)} · Room: ${o.room_no||'-'}</div>
+        </div>
+        <div style="text-align:right">
+          ${statusBadge(o.status)}
+          <div style="font-weight:800;color:var(--latte);margin-top:4px">Rs. ${o.total_amount}</div>
+        </div>
+      </div>
+      <div class="text-muted" style="font-size:0.82rem;margin-bottom:8px">
+        ${o.items.map(i=>`${i.item_name} x${i.quantity}`).join(', ')}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        ${o.status==='delivered' ? `
+          <button class="btn btn-primary btn-sm" onclick="openFeedback(${o.id})">⭐ Rate</button>
+          <button class="btn btn-danger btn-sm" onclick="openComplaint(${o.id})">📣 Complaint</button>
+        ` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+// Subscriptions
+function loadSubCafeSelect() {
+  const sel = document.getElementById('sub-cafe-select');
+  sel.innerHTML = cafes.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+}
+
+async function loadSubscriptions() {
+  const subs = await apiFetch('/api/subscriptions');
+  const el = document.getElementById('sub-list');
+  if (!subs.length) {
+    el.innerHTML = '<div class="empty-state"><div class="emoji">⭐</div>No subscriptions yet. Request one below.</div>';
+    return;
+  }
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Cafe</th><th>Status</th><th>Start</th><th>End</th></tr></thead>
+    <tbody>${subs.map(s=>`
+      <tr>
+        <td>${s.cafe_name}</td>
+        <td>${statusBadge(s.status)}</td>
+        <td>${s.start_date||'-'}</td>
+        <td>${s.end_date||'-'}</td>
+      </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+async function requestSub() {
+  const cafe_id = document.getElementById('sub-cafe-select').value;
+  try {
+    const res = await apiFetch('/api/subscriptions', { method:'POST', body: JSON.stringify({cafe_id}) });
+    showToast(res.message, 'success');
+    loadSubscriptions();
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+// Complaints
+async function loadComplaints() {
+  const complaints = await apiFetch('/api/complaints');
+  const el = document.getElementById('complaints-list');
+  if (!complaints.length) {
+    el.innerHTML = '<div class="empty-state"><div class="emoji">😊</div>No complaints filed</div>';
+    return;
+  }
+  el.innerHTML = `<div class="table-wrap"><table>
+    <thead><tr><th>Order #</th><th>Complaint</th><th>Status</th><th>Filed</th></tr></thead>
+    <tbody>${complaints.map(c=>`
+      <tr>
+        <td>#${c.order_id}</td>
+        <td>${c.complaint_text}</td>
+        <td>${statusBadge(c.status)}</td>
+        <td>${fmtDate(c.created_at)}</td>
+      </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
+// Feedback modal
+function openFeedback(orderId) { feedbackOrderId=orderId; selectedRating=0; setRating(0); document.getElementById('feedback-modal').classList.remove('hidden'); }
+function closeFeedback() { document.getElementById('feedback-modal').classList.add('hidden'); }
+function setRating(r) {
+  selectedRating = r;
+  document.querySelectorAll('.star').forEach((s,i) => s.classList.toggle('active', i<r));
+}
+async function submitFeedback() {
+  if (!selectedRating) { showToast('Select a rating', 'error'); return; }
+  const comment = document.getElementById('feedback-comment').value;
+  try {
+    await apiFetch('/api/feedback', { method:'POST', body: JSON.stringify({order_id:feedbackOrderId, rating:selectedRating, comment}) });
+    closeFeedback();
+    showToast('Feedback submitted! ⭐', 'success');
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+// Complaint modal
+function openComplaint(orderId) { complaintOrderId=orderId; document.getElementById('complaint-modal').classList.remove('hidden'); }
+function closeComplaint() { document.getElementById('complaint-modal').classList.add('hidden'); }
+async function submitComplaint() {
+  const text = document.getElementById('complaint-text').value.trim();
+  if (!text) { showToast('Describe your complaint', 'error'); return; }
+  try {
+    await apiFetch('/api/complaints', { method:'POST', body: JSON.stringify({order_id:complaintOrderId, complaint_text:text}) });
+    closeComplaint();
+    showToast('Complaint filed!', 'success');
+    loadComplaints();
+  } catch(e) { showToast(e.message,'error'); }
+}
+
+// Section switching
+function switchSection(sec, el) {
+  document.querySelectorAll('.section-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.section-content').forEach(s=>s.classList.remove('active'));
+  if(el) el.classList.add('active');
+  document.getElementById('sec-'+sec).classList.add('active');
+  if(sec==='orders') loadOrders();
+  if(sec==='subscriptions') loadSubscriptions();
+  if(sec==='complaints') loadComplaints();
+}
+
+init();
+</script>
+</body>
+</html>

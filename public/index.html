@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UNICAFE – Login</title>
+<link rel="stylesheet" href="/style.css">
+<style>
+.role-selector { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 1.2rem; }
+.role-btn {
+  padding: 12px 8px;
+  border-radius: 10px;
+  border: 2px solid var(--border);
+  background: white;
+  cursor: pointer;
+  text-align: center;
+  font-weight: 700;
+  font-size: 0.82rem;
+  transition: all 0.2s;
+  color: var(--muted);
+}
+.role-btn.active { border-color: var(--latte); background: #fff8f0; color: var(--espresso); }
+.role-icon { font-size: 1.8rem; display: block; margin-bottom: 4px; }
+.divider { text-align: center; color: var(--muted); font-size: 0.8rem; margin: 1rem 0; position: relative; }
+.divider::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 1px; background: var(--border); }
+.divider span { background: white; padding: 0 10px; position: relative; }
+.hint { background: #fff8f0; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; font-size: 0.8rem; color: var(--muted); margin-bottom: 1rem; }
+.hint strong { color: var(--espresso); }
+</style>
+</head>
+<body>
+<div class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <h1>UNI<span>CAFE</span></h1>
+      <p>FAST-NUCES Islamabad Campus Food Portal</p>
+    </div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchTab('login')">Login</div>
+      <div class="auth-tab" onclick="switchTab('signup')">Sign Up</div>
+    </div>
+
+    <!-- LOGIN -->
+    <div id="login-form">
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-control" type="email" id="login-email" placeholder="i240001@nu.edu.pk/@unicafe.com" >
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-control" type="password" id="login-password" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" style="width:100%" onclick="doLogin()">Login</button>
+      <!-- <div class="hint mt-2">
+        <strong>Demo accounts:</strong><br>
+        Red Cafe Owner: redcafe@unicafe.com / redcafe123<br>
+        Blue Cafe Owner: bluecafe@unicafe.com / bluecafe123
+      </div> -->
+    </div>
+
+    <!-- SIGNUP -->
+    <div id="signup-form" style="display:none">
+      <div class="form-group">
+        <label class="form-label">I am a...</label>
+        <div class="role-selector">
+          <div class="role-btn active" onclick="selectRole('student',this)">
+            <span class="role-icon"></span>Student
+          </div>
+          <div class="role-btn" onclick="selectRole('owner',this)">
+            <span class="role-icon"></span>Cafe Owner
+          </div>
+          <div class="role-btn" onclick="selectRole('delivery',this)">
+            <span class="role-icon"></span>Delivery Boy
+          </div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Full Name</label>
+        <input class="form-control" type="text" id="su-name" placeholder="Ali Ahmed">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Email</label>
+        <input class="form-control" type="email" id="su-email" placeholder="i240001@nu.edu.pk/@unicafe.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input class="form-control" type="password" id="su-password" placeholder="Password">
+      </div>
+
+      <!-- Student fields -->
+      <div id="student-fields">
+        <div class="form-group">
+          <label class="form-label">Roll Number</label>
+          <input class="form-control" type="text" id="su-roll" placeholder="24i-XXXX">
+        </div>
+      </div>
+
+      <!-- Owner fields -->
+      <div id="owner-fields" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Cafe Name</label>
+          <input class="form-control" type="text" id="su-cafename" placeholder="e.g. My Campus Cafe">
+        </div>
+        <div class="form-group">
+          <label class="form-label">CNIC</label>
+          <input class="form-control" type="number" id="su-cnic-owner" placeholder="XXXXX-XXXXXXX-X">
+        </div>
+      </div>
+
+      <!-- Delivery fields -->
+      <div id="delivery-fields" style="display:none">
+        <div class="form-group">
+          <label class="form-label">Select Cafe</label>
+          <select class="form-control" id="su-cafe-select">
+            <option value="">Loading cafes...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">CNIC</label>
+          <input class="form-control" type="number" id="su-cnic-delivery" placeholder="XXXXX-XXXXXXX-X">
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%" onclick="doSignup()">Create Account</button>
+    </div>
+  </div>
+</div>
+
+<script src="/utils.js"></script>
+<script>
+let selectedRole = 'student';
+
+// Redirect if already logged in
+const existingUser = getUser();
+if (existingUser) {
+  const pages = { student: '/menu.html', owner: '/owner.html', delivery: '/delivery.html' };
+  window.location.href = pages[existingUser.role] || '/';
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach((t,i) => {
+    t.classList.toggle('active', (i===0 && tab==='login') || (i===1 && tab==='signup'));
+  });
+  document.getElementById('login-form').style.display = tab==='login' ? '' : 'none';
+  document.getElementById('signup-form').style.display = tab==='signup' ? '' : 'none';
+  if (tab === 'signup') loadCafes();
+}
+
+function selectRole(role, el) {
+  selectedRole = role;
+  document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('student-fields').style.display = role==='student' ? '' : 'none';
+  document.getElementById('owner-fields').style.display = role==='owner' ? '' : 'none';
+  document.getElementById('delivery-fields').style.display = role==='delivery' ? '' : 'none';
+}
+
+async function loadCafes() {
+  try {
+    const cafes = await apiFetch('/api/cafes');
+    const sel = document.getElementById('su-cafe-select');
+    sel.innerHTML = '<option value="">-- Select Cafe --</option>' +
+      cafes.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+  } catch(e) {}
+}
+
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  if (!email || !password) { showToast('Fill all fields', 'error'); return; }
+  try {
+    const user = await apiFetch('/api/login', { method:'POST', body: JSON.stringify({email, password}) });
+    saveUser(user);
+    const pages = { student: '/menu.html', owner: '/owner.html', delivery: '/delivery.html' };
+    showToast('Welcome back, ' + user.name + '!', 'success');
+    setTimeout(() => window.location.href = pages[user.role] || '/', 600);
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+async function doSignup() {
+  const name = document.getElementById('su-name').value.trim();
+  const email = document.getElementById('su-email').value.trim();
+  const password = document.getElementById('su-password').value;
+  if (!name || !email || !password) { showToast('Fill all required fields', 'error'); return; }
+
+  const body = { name, email, password, role: selectedRole };
+  if (selectedRole === 'student') body.roll_no = document.getElementById('su-roll').value.trim();
+  if (selectedRole === 'owner') {
+    body.cafe_name = document.getElementById('su-cafename').value.trim();
+    body.cnic = document.getElementById('su-cnic-owner').value.trim();
+  }
+  if (selectedRole === 'delivery') {
+    body.cafe_id = document.getElementById('su-cafe-select').value;
+    body.cnic = document.getElementById('su-cnic-delivery').value.trim();
+  }
+
+  try {
+    await apiFetch('/api/signup', { method:'POST', body: JSON.stringify(body) });
+    showToast('Account created! Please login.', 'success');
+    switchTab('login');
+    document.getElementById('login-email').value = email;
+  } catch(e) {
+    showToast(e.message, 'error');
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    if (document.getElementById('login-form').style.display !== 'none') doLogin();
+    else doSignup();
+  }
+});
+</script>
+</body>
+</html>
